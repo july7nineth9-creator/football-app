@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界サッカー日程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080d18;
+  --surface: #0f1623;
+  --surface2: #161f30;
+  --border: rgba(255,255,255,0.07);
+  --text: #eef2ff;
+  --muted: #6b7a99;
+  --accent: #00e5a0;
+  --live: #ff4e4e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+header {
+  background: rgba(8,13,24,0.97);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px; letter-spacing: 2px; color: var(--accent);
+  display: flex; align-items: center; gap: 6px;
+}
+.logo em { color: #fff; font-style: normal; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.update-time { font-size: 11px; color: var(--muted); }
+.reload-btn {
+  font-size: 12px; padding: 5px 12px;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s;
+}
+.reload-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+.filters-wrap {
+  max-width: 900px; margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.filter-btn {
+  font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
+  padding: 5px 13px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover { background: var(--surface2); color: var(--text); }
+.filter-btn.active { background: var(--accent); color: #080d18; border-color: var(--accent); font-weight: 700; }
+
+main { max-width: 900px; margin: 0 auto; padding: 0 1rem 3rem; }
+
+.loading { text-align: center; padding: 4rem 1rem; color: var(--muted); font-size: 14px; }
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box {
+  background: rgba(255,78,78,0.08); border: 1px solid rgba(255,78,78,0.25);
+  border-radius: 12px; padding: 1.5rem; text-align: center; color: #ff7070; font-size: 13px; margin-top: 1rem;
+}
+.no-data { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
+
+.day-section { margin-bottom: 1.25rem; }
+.day-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px; letter-spacing: 2px; color: var(--muted);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.today-tag {
+  font-family: 'Noto Sans JP', sans-serif; font-size: 10px; letter-spacing: 0;
+  background: var(--accent); color: #080d18;
+  padding: 2px 8px; border-radius: 10px; font-weight: 700;
+}
+.day-count {
+  font-family: 'Noto Sans JP', sans-serif; font-size: 11px; letter-spacing: 0;
+  background: var(--surface2); color: var(--muted);
+  padding: 2px 8px; border-radius: 10px;
+}
+
+.match-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 56px 1fr 70px;
+  align-items: center; gap: 8px;
+  padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface); margin-bottom: 5px;
+  transition: background 0.12s;
+}
+.match-row:hover { background: var(--surface2); }
+.match-row.is-live { border-color: rgba(255,78,78,0.3); }
+
+.m-time { font-size: 12px; font-weight: 500; text-align: center; color: var(--text); line-height: 1.4; }
+.live-dot {
+  display: inline-block; width: 6px; height: 6px;
+  background: var(--live); border-radius: 50%; margin-right: 3px;
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+.live-min { font-size: 11px; color: var(--live); display: block; }
+
+.m-team { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-team.home { text-align: right; }
+.m-team.away { text-align: left; }
+
+.m-score { font-size: 15px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; color: var(--text); }
+.m-score.live { color: var(--live); }
+.m-score.upcoming { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+.league-badge {
+  font-size: 10px; padding: 3px 6px;
+  border-radius: 7px; text-align: center;
+  font-weight: 700; white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .match-row { grid-template-columns: 46px 1fr 46px 1fr 52px; gap: 4px; padding: 7px 8px; }
+  .m-team { font-size: 11px; }
+  .m-score { font-size: 13px; }
+  .league-badge { font-size: 9px; padding: 2px 4px; }
+  .m-time { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">⚽ <em>WORLD</em> FOOTBALL</div>
+    <div class="header-right">
+      <span class="update-time" id="update-time"></span>
+      <button class="reload-btn" onclick="init()">↻ 更新</button>
+    </div>
+  </div>
+</header>
+
+<div class="filters-wrap" id="filters"></div>
+<main id="content">
+  <div class="loading"><div class="spinner"></div>試合データを取得中...</div>
+</main>
+
+<script>
+const LEAGUES = [
+  { id: 39,  name: 'プレミアリーグ',         short: 'PL',     color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', cat: 'league' },
+  { id: 140, name: 'ラ・リーガ',             short: 'LaLiga', color: '#f87171', bg: 'rgba(248,113,113,0.15)', cat: 'league' },
+  { id: 78,  name: 'ブンデスリーガ',         short: 'BL',     color: '#fb923c', bg: 'rgba(251,146,60,0.15)',  cat: 'league' },
+  { id: 135, name: 'セリエA',               short: 'SerA',   color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  cat: 'league' },
+  { id: 61,  name: 'リーグ・アン',           short: 'L1',     color: '#22d3ee', bg: 'rgba(34,211,238,0.15)',  cat: 'league' },
+  { id: 2,   name: 'チャンピオンズリーグ',   short: 'UCL',    color: '#fbbf24', bg: 'rgba(251,191,36,0.15)',  cat: 'cup' },
+  { id: 3,   name: 'ヨーロッパリーグ',       short: 'UEL',    color: '#fb923c', bg: 'rgba(251,146,60,0.15)',  cat: 'cup' },
+  { id: 848, name: 'カンファレンスリーグ',   short: 'UECL',   color: '#10b981', bg: 'rgba(16,185,129,0.15)',  cat: 'cup' },
+  { id: 45,  name: 'FA杯',                  short: 'FAC',    color: '#ec4899', bg: 'rgba(236,72,153,0.15)',  cat: 'cup' },
+  { id: 48,  name: 'カラバオ杯',            short: 'CC',     color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)',  cat: 'cup' },
+  { id: 143, name: 'コパ・デルレイ',        short: 'CDR',    color: '#eab308', bg: 'rgba(234,179,8,0.15)',   cat: 'cup' },
+  { id: 137, name: 'コッパ・イタリア',      short: 'CI',     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  cat: 'cup' },
+  { id: 65,  name: 'クープ・ド・フランス',  short: 'CDF',    color: '#22d3ee', bg: 'rgba(34,211,238,0.15)',  cat: 'cup' },
+  { id: 4,   name: 'ユーロ予選',            short: 'EURO',   color: '#00e5a0', bg: 'rgba(0,229,160,0.15)',   cat: 'national' },
+  { id: 5,   name: 'W杯予選',              short: 'WCQ',    color: '#00e5a0', bg: 'rgba(0,229,160,0.12)',   cat: 'national' },
+];
+const SEASON = 2024;
+
+let allMatches = [];
+let activeFilter = 'all';
+
+function leagueInfo(id) {
+  return LEAGUES.find(l => l.id === id) || { short: '?', color: '#888', bg: 'rgba(136,136,136,0.12)' };
+}
+function toJST(utcStr) {
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(utcStr));
+}
+function toDateKeyJST(d) {
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
+function toDateLabelJST(d) {
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short' }).format(d);
+}
+function isLive(m) { return ['1H','2H','HT','ET','BT','P'].includes(m.fixture.status.short); }
+function isFinished(m) { return ['FT','AET','PEN'].includes(m.fixture.status.short); }
+function statusLabel(m) {
+  const s = m.fixture.status.short;
+  if (isFinished(m)) return '終了';
+  if (isLive(m)) return (m.fixture.status.elapsed || '') + "'";
+  if (s === 'NS') return toJST(m.fixture.date);
+  if (s === 'PST' || s === 'CANC') return '中止';
+  return s;
+}
+
+function renderMatches(matches) {
+  const content = document.getElementById('content');
+  if (!matches.length) {
+    content.innerHTML = '<div class="no-data">この期間の試合データがありません</div>';
+    return;
+  }
+  const byDay = {};
+  const today = toDateKeyJST(new Date());
+  matches.forEach(m => {
+    const key = toDateKeyJST(new Date(m.fixture.date));
+    if (!byDay[key]) byDay[key] = [];
+    byDay[key].push(m);
+  });
+  let html = '';
+  Object.keys(byDay).sort().forEach(dayKey => {
+    const dayMatches = byDay[dayKey].sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    const label = toDateLabelJST(new Date(dayMatches[0].fixture.date));
+    const isToday = dayKey === today;
+    html += `<div class="day-section">
+      <div class="day-label">${label}
+        ${isToday ? '<span class="today-tag">TODAY</span>' : ''}
+        <span class="day-count">${dayMatches.length}試合</span>
+      </div>`;
+    dayMatches.forEach(m => {
+      const li = leagueInfo(m.league.id);
+      const live = isLive(m);
+      const fin = isFinished(m);
+      const st = statusLabel(m);
+      const scoreText = (fin || live) ? `${m.goals.home ?? '-'} - ${m.goals.away ?? '-'}` : 'vs';
+      const scoreClass = live ? 'm-score live' : fin ? 'm-score' : 'm-score upcoming';
+      const timeHtml = live ? `<span class="live-min"><span class="live-dot"></span>${st}</span>` : st;
+      html += `<div class="match-row${live ? ' is-live' : ''}">
+        <div class="m-time">${timeHtml}</div>
+        <div class="m-team home">${m.teams.home.name}</div>
+        <div class="${scoreClass}">${scoreText}</div>
+        <div class="m-team away">${m.teams.away.name}</div>
+        <span class="league-badge" style="color:${li.color};background:${li.bg}">${li.short}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  content.innerHTML = html;
+}
+
+function applyFilter(filter) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  const filtered =
+    filter === 'all' ? allMatches :
+    filter === 'league' ? allMatches.filter(e => e._cat === 'league') :
+    filter === 'cup' ? allMatches.filter(e => e._cat === 'cup') :
+    allMatches.filter(e => e._cat === 'national');
+  renderMatches(filtered);
+}
+
+function buildFilters() {
+  const wrap = document.getElementById('filters');
+  wrap.innerHTML = [
+    { label: 'すべて', f: 'all' },
+    { label: 'リーグ戦', f: 'league' },
+    { label: 'カップ / CL', f: 'cup' },
+    { label: '代表戦', f: 'national' },
+  ].map(i => `<button class="filter-btn${i.f==='all'?' active':''}" data-filter="${i.f}">${i.label}</button>`).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => applyFilter(b.dataset.filter)));
+}
+
+async function fetchLeague(league) {
+  const now = new Date();
+  const from = new Date(now.getTime() - 2 * 864e5).toISOString().slice(0, 10);
+  const to   = new Date(now.getTime() + 5 * 864e5).toISOString().slice(0, 10);
+  const res = await fetch(`/api/fixtures?league=${league.id}&season=${SEASON}&from=${from}&to=${to}`);
+  const data = await res.json();
+  return (data.response || []).map(m => ({ ...m, _cat: league.cat }));
+}
+
+async function init() {
+  buildFilters();
+  document.getElementById('content').innerHTML = '<div class="loading"><div class="spinner"></div>試合データを取得中...</div>';
+  document.getElementById('update-time').textContent = '';
+  try {
+    const results = await Promise.allSettled(LEAGUES.map(l => fetchLeague(l)));
+    allMatches = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    allMatches.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    const now = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+    document.getElementById('update-time').textContent = `更新: ${now} JST`;
+    renderMatches(allMatches);
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="error-box">データ取得エラー: ${e.message}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
